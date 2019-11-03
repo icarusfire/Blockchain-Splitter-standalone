@@ -24,7 +24,7 @@ var expectedBalanceDifference = function (initialBalance, balance, gasUsed) { re
 
 describe("Splitter", function() {
     
-    console.log("Current host:", web3.currentProvider);
+    console.log("Current host:", web3.currentProvider.host);
     let accounts, networkId, instance, owner, alice, bob, carol;
 
     before("get accounts", async function() {
