@@ -6,8 +6,9 @@
     "test": "mocha"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^2.4.0",
     "truffle-contract": "^4.0.11",
-    "web3": "1.0.0-beta.37"
+    "web3": "1.2.0"
   },
   "devDependencies": {
     "assert-plus": "^1.0.0",
