@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/lifecycle/Pausable.sol";
+import "./Pausable.sol";
 
 contract Splitter is Pausable{
     using SafeMath for uint256;
