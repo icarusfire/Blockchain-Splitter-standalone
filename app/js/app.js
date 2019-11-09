@@ -7,6 +7,7 @@ require("file-loader?name=../index.html!../index.html");
 
 if (typeof web3 !== 'undefined') {
     // Use the Mist/wallet/Metamask provider.
+    console.log(web3.currentProvider);
     window.web3 = new Web3(web3.currentProvider);
 } else {
     // Your preferred fallback.
@@ -27,11 +28,8 @@ window.addEventListener('load', function() {
             console.log("Account:", window.account);
             return web3.eth.net.getId();
         })
-        .then(network => {
+        .then(network =>{
             console.log("Network:", network.toString(10));
-            return Splitter.deployed();
-        })
-        .then(deployed =>{
 			return web3.eth.getBalance(window.account);		
 		})
         // Notice how the conversion to a string is done only when displaying.
