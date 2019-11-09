@@ -42,19 +42,21 @@ module.exports = {
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
     //
-    // development: {
-    //  host: "127.0.0.1",     // Localhost (default: none)
-    //  port: 8545,            // Standard Ethereum port (default: none)
-    //  network_id: "*"       // Any network (default: none)
-    // },
-    //
-    test: {
+    development: {
      host: "127.0.0.1",     // Localhost (default: none)
-     port: 7545,            // Standard Ethereum port (default: none)
-     network_id: 5777       // Any network (default: none)
-     // gas: 6721975
-    
+     port: 8545,            // Standard Ethereum port (default: none)
+     network_id: "*" ,      // Any network (default: none)
+     gas: 6721975 // Or any higher value that you deem necessary
+		
     }
+    //
+    // test: {
+    //  host: "127.0.0.1",     // Localhost (default: none)
+    //  port: 7545,            // Standard Ethereum port (default: none)
+    //  network_id: 5777       // Any network (default: none)
+    //  // gas: 6721975
+    //
+    // }
 	  //  testGanacheTruffle: {
 	  //     host: "127.0.0.1",     // Localhost (default: none)
 	  //     port: 7545,            // Standard Ethereum port (default: none)
