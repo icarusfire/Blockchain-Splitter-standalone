@@ -11,15 +11,15 @@ const assert = require('assert-plus');
 Promise = require("bluebird");
 const truffleAssert = require('truffle-assertions');
 const getBalance = Promise.promisify(web3.eth.getBalance);
+const getTransaction =  Promise.promisify(web3.eth.getTransaction);
+
 const BN = web3.utils.BN;
-const gasPrice = new BN(1000000);
 const amountToSend = web3.utils.toWei("0.2", "ether");
 const amountToSendBig = web3.utils.toWei("3.48", "ether");
 const amountToDraw = web3.utils.toWei("0.1", "ether");
 
-
 var toEther = function(balance) { return web3.utils.fromWei(new BN(balance),'ether'); }
-var expectedBalanceDifference = function (initialBalance, balance, gasUsed) { return web3.utils.fromWei(new BN(balance).add(new BN(gasUsed).mul(gasPrice)).sub(new BN(initialBalance)), 'ether'); }
+var expectedBalanceDifference = function (initialBalance, balance, gasUsed, gasPrice) { return web3.utils.fromWei(new BN(balance).add(new BN(gasUsed).mul(gasPrice)).sub(new BN(initialBalance)), 'ether'); }
 
 
 describe("Splitter", function() {
@@ -35,10 +35,10 @@ describe("Splitter", function() {
     });
     
     beforeEach(async function() {
-            instance = await Splitter.new( {from: owner} )
+            instance = await Splitter.new(false, {from: owner} )
         });
 
-    it("bob and Carol's balances should be 0.1 after receiving a split", function() {
+        it("bob and Carol's balances should be 0.1 after receiving a split", function() {
             return instance.splitEther(bob, carol, { from: alice, value:amountToSend })
                 .then( _ => instance.balances(bob))
                 .then(balanceBob => assert.strictEqual(toEther(balanceBob), '0.1'))
@@ -46,7 +46,7 @@ describe("Splitter", function() {
                 .then(balanceCarol => assert.strictEqual(toEther(balanceCarol), '0.1'))     
             });
     
-    it("bob and Carol's balances should be 1.84 after receiving 2 splits", function() {
+        it("bob and Carol's balances should be 1.84 after receiving 2 splits", function() {
             return instance.splitEther(bob, carol, { from: alice, value:amountToSend })
                 .then (_ => instance.splitEther(bob, carol, { from: alice, value:amountToSendBig }))
                 .then( _ => instance.balances(bob))
@@ -55,8 +55,9 @@ describe("Splitter", function() {
                 .then(balanceCarol => assert.strictEqual(toEther(balanceCarol), '1.84'))     
             });        
             
-    it("bob can withdraw funds", function() {
+        it("bob can withdraw funds", function() {
             var gasUsed;
+            var gasPrice;
             var balanceBobInitial;
     
             return getBalance(bob)
@@ -67,15 +68,21 @@ describe("Splitter", function() {
                 .then( _ => instance.withdraw(amountToDraw, { from: bob, gasPrice: gasPrice }))
                 .then(trx => {
                     gasUsed = trx.receipt.gasUsed;
-                    return instance.balances(bob);
+                    return getTransaction(trx.tx);
                 })
+                .then(transaction => { 
+                    gasPrice = transaction.gasPrice;
+                    return;
+                })
+                .then ( _ => instance.balances(bob))
                 .then(balanceBob => assert.strictEqual(toEther(balanceBob), '0'))
                 .then( _ => getBalance(bob))
-                .then(balanceBob => assert.strictEqual(expectedBalanceDifference(balanceBobInitial, balanceBob, gasUsed), '0.1'))
+                .then(balanceBob => assert.strictEqual(expectedBalanceDifference(balanceBobInitial, balanceBob, gasUsed, new BN(gasPrice)), '0.1'))
             });
     
-    it("carol can withdraw funds", function() {
+        it("carol can withdraw funds", function() {
             var gasUsed;
+            var gasPrice;
             var balanceCarolInitial;
     
             return getBalance(carol)
@@ -86,14 +93,19 @@ describe("Splitter", function() {
                 .then( _ => instance.withdraw(amountToDraw, { from: carol, gasPrice: gasPrice }))
                 .then(trx => {
                     gasUsed = trx.receipt.gasUsed;
-                    return instance.balances(carol);
+                    return getTransaction(trx.tx);
                 })
+                .then(transaction => { 
+                    gasPrice = transaction.gasPrice;
+                    return;
+                })
+                .then ( _ => instance.balances(carol))
                 .then(balanceCarol => assert.strictEqual(toEther(balanceCarol), '0'))
                 .then( _ => getBalance(carol))
-                .then(balanceCarol => assert.strictEqual(expectedBalanceDifference(balanceCarolInitial, balanceCarol, gasUsed), '0.1'))
+                .then(balanceCarol => assert.strictEqual(expectedBalanceDifference(balanceCarolInitial, balanceCarol, gasUsed, new BN(gasPrice)), '0.1'))
             });
     
-    it("should emit events after splitting Ether", function() {
+        it("should emit events after splitting Ether", function() {
             return instance.splitEther(bob, carol,{from: alice, value:amountToSend }) 
                 .then( tx => {
                     truffleAssert.eventEmitted(tx, 'LogSplitEvent', (event) => {
@@ -102,27 +114,41 @@ describe("Splitter", function() {
                 })
             });
     
-    it("should emit events after withdraw", function() {
+        it("should emit events after withdraw", function() {
             return instance.splitEther(bob, carol, {from: alice, value:amountToSend })
-                .then( _ => instance.withdraw(amountToDraw, { from: bob, gasPrice: gasPrice }))
+                .then( _ => instance.withdraw(amountToDraw, { from: bob }))
                 .then( tx => {
                     truffleAssert.eventEmitted(tx, 'LogWithdrawEvent', (event) => {
                         return event.amountDrawn.cmp(new BN(amountToDraw)) === 0 && event.sender === bob;
                     });
                 })
-            });     
+            });
+        
+        it("should emit events after owner changed", function() {
+            return instance.setOwner(bob, {from: owner})
+                .then( tx => {
+                    truffleAssert.eventEmitted(tx, 'OwnerChangedEvent', (event) => {
+                        return event.from === owner && event.to === bob;
+                    });
+                })
+            });    
           
-    it("Bob can't pause", async function() {
-                await truffleAssert.reverts(instance.pause( {from: bob} ), "caller does not have the Pauser role");
+        it("Bob can't pause", async function() {
+                await truffleAssert.reverts(instance.pause( {from: bob} ), "Only owner can execute this action");
+            });
+        
+        it("Bob can't kill", async function() {
+                await truffleAssert.reverts(instance.kill( {from: bob} ), "Only owner can execute this action");
             });
     
-    it("should abort with an error when Paused", function() {
-            return instance.pause({ from: owner})
-                .then(truffleAssert.reverts(instance.withdraw(amountToDraw, { from: bob, gasPrice: gasPrice }), "Pausable: paused"))
-                .then(truffleAssert.reverts(instance.splitEther(bob, carol, {from: alice, value:amountToSend }), "Pausable: paused"));
-            });        
-              
-
+        it("Owner can kill", async function() {
+                await truffleAssert.passes(instance.kill( {from: owner} ));
+            });    
     
+        it("should abort with an error when Paused", function() {
+            return instance.pause({ from: owner})
+                .then(truffleAssert.reverts(instance.withdraw(amountToDraw, { from: bob}), "Pausable: paused"))
+                .then(truffleAssert.reverts(instance.splitEther(bob, carol, {from: alice, value:amountToSend }), "Pausable: paused"));
+        });
 
 });
