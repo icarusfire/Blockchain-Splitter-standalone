@@ -41,6 +41,7 @@ window.addEventListener('load', function() {
             return Splitter.deployed();
         })
         .then(deployed => {
+            console.log("Account address", deployed.address);
 			return web3.eth.getBalance(deployed.address);
 		})		
         // Notice how the conversion to a string is done only when displaying.
