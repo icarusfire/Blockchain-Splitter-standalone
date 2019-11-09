@@ -1,27 +1,47 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.10;
 
 import "./Ownable.sol";
 
 contract Pausable is Ownable{
 
-    bool _paused;
+    bool private paused;
+    bool private killed;
+
+    constructor(bool _pausable) internal {
+        paused = _pausable;
+    }
+
 
     modifier whenNotPaused() {
-        require(!_paused, "Pausable: paused");
+        require(!paused, "Pausable: paused");
         _;
     }
 
     modifier whenPaused() {
-        require(_paused, "Pausable: not paused");
+        require(paused, "Pausable: not paused");
         _;
     }
 
-    function pause() public onlyOwner {
-        _paused = true;
+    modifier whenNotKilled(){
+        require(!killed, "Pausable: not killed");
+        _;
     }
 
-    function unpause() public onlyOwner {
-        _paused = false;
+    function pause() public onlyOwner whenNotPaused{
+        paused = true;
+    }
+
+    function resume() public onlyOwner whenPaused whenNotKilled{
+        paused = false;
+    }
+
+    function isPaused() public view returns(bool) {
+        return paused;
+    }
+
+    function kill() public onlyOwner {
+        killed = true;
+        paused = true;
     }
 
 }

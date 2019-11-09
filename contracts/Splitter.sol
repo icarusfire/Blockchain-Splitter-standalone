@@ -1,16 +1,21 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.10;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./SafeMath.sol";
 import "./Pausable.sol";
 
-contract Splitter is Pausable{
+contract Splitter is Pausable {
     using SafeMath for uint256;
     event LogSplitEvent(address indexed sender, uint256 amountToBeSplitted, address indexed recp1, address indexed recp2);
     event LogWithdrawEvent(address indexed sender, uint256 amountDrawn);
+    event BalanceSetEvent(address indexed sender, uint256 amount, address indexed recp);
+    event FundsTransferedToOwnerEvent(address indexed owner, uint256 amount);
 
     mapping(address => uint256) public balances;
 
-    function splitEther(address recp1, address recp2) public payable whenNotPaused{
+    constructor(bool _pausable) Pausable(_pausable) public {
+    }
+
+    function splitEther(address recp1, address recp2) public payable whenNotPaused {
         require(msg.value > 0, "Split amount should be higher than 0");
         require(recp1 != address(0) && recp2 != address(0), "Recipient addresses should not be empty");
 
@@ -24,11 +29,20 @@ contract Splitter is Pausable{
         emit LogSplitEvent(msg.sender, msg.value, recp1, recp2);
     }
 
-    function withdraw(uint256 amount) public whenNotPaused{
+    function withdraw(uint256 amount) public whenNotPaused {
         require (amount > 0, "Withdraw amount should be higher than 0");
         uint256 balanceSender = balances[msg.sender];
         balances[msg.sender] = balanceSender.sub(amount);
         emit LogWithdrawEvent(msg.sender, amount);
-        msg.sender.transfer(amount);
+        (bool success, ) = msg.sender.call.value(amount)("");
+        require(success, "Transfer failed.");
     }
+
+    function transferFunds() public whenPaused onlyOwner{
+        uint256 amount = address(this).balance;
+        emit FundsTransferedToOwnerEvent(msg.sender, amount);
+        (bool success, ) = msg.sender.call.value(amount)("");
+        require(success, "Transfer failed.");
+    }
+
 }
