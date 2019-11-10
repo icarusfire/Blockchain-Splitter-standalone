@@ -1,3 +1,4 @@
+
 const Web3 = require("web3");
 const truffleContract = require("truffle-contract");
 const $ = require("jquery");
@@ -5,20 +6,35 @@ const $ = require("jquery");
 const splitterJson = require("../../build/contracts/Splitter.json");
 require("file-loader?name=../index.html!../index.html");
 
-if (typeof web3 !== 'undefined') {
-    // Use the Mist/wallet/Metamask provider.
-    console.log(web3.currentProvider);
+const Splitter = truffleContract(splitterJson);
+
+if (typeof ethereum !== 'undefined') {
+    window.web3 = new Web3(ethereum);
+} 
+else if (typeof web3 !== 'undefined') {
     window.web3 = new Web3(web3.currentProvider);
 } else {
-    // Your preferred fallback.
     window.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:8545')); 
 }
 
-const Splitter = truffleContract(splitterJson);
+const BN = web3.utils.BN;
+var toEther = function(balance) { return web3.utils.fromWei(new BN(balance),'ether'); }
+var toWei = function(balance) { return web3.utils.toWei(new BN(balance),'ether'); }
+
 Splitter.setProvider(web3.currentProvider);
+console.log(web3.currentProvider);
 
 window.addEventListener('load', function() {
-    return web3.eth.getAccounts()
+    return web3.eth.net.getId()
+        .then(network => console.log("Network:", network.toString(10)))
+        .then( _ =>{
+            if (typeof ethereum !== 'undefined') {
+                return ethereum.enable();
+            } 
+            else {
+                return web3.eth.getAccounts();
+            }
+        })
         .then(accounts => {
             if (accounts.length == 0) {
                 $("#balance").html("N/A");
@@ -26,28 +42,15 @@ window.addEventListener('load', function() {
             }
             window.account = accounts[0];
             console.log("Account:", window.account);
-            return web3.eth.net.getId();
-        })
-        .then(network =>{
-            console.log("Network:", network.toString(10));
 			return web3.eth.getBalance(window.account);		
-		})
-        // Notice how the conversion to a string is done only when displaying.
-        .then(balance => $("#balance").html(balance.toString(10)))
-		
-        .then(network => {
-            return Splitter.deployed();
         })
-        .then(deployed => {
-            console.log("Account address", deployed.address);
-			return web3.eth.getBalance(deployed.address);
-		})		
         // Notice how the conversion to a string is done only when displaying.
-        .then(balance => {
-			console.log("Account Balance", balance);
-			$("#balance2").html(balance.toString(10));
-		})
+        .then(balance => $("#balance").html(toEther(balance.toString(10))))
+        .then( _ => Splitter.deployed())
+        .then(deployed => web3.eth.getBalance(deployed.address))		
+        .then(balance => $("#balance2").html(toEther(balance.toString(10))))
         .then(() => $("#send").click(split))
+
         // Never let an error go unlogged.
         .catch(console.error);
 });
@@ -67,7 +70,7 @@ const split = function() {
 
                 // Giving a string is fine
                 //$("input[name='amount']").val(),
-                { from: window.account, gas: gas, value: $("input[name='amount']").val()});
+                { from: window.account, gas: gas, value: toWei($("input[name='amount']").val())});
         })
         .then(success => {
             if (!success) {
@@ -79,7 +82,7 @@ const split = function() {
                 $("input[name='recipient1']").val(),
                 // Giving a string is fine
                 $("input[name='recipient2']").val(),
-                { from: window.account, gas: gas, value: $("input[name='amount']").val()})
+                { from: window.account, gas: gas, value: toWei($("input[name='amount']").val())})
                 // .sendCoin takes time in real life, so we get the txHash immediately while it 
                 // is mined.
                 .on(
@@ -107,7 +110,10 @@ const split = function() {
             return web3.eth.getBalance(window.account);
 
         })
-        .then(balance => $("#balance").html(balance.toString(10)))
+        .then(balance => $("#balance").html(toEther(balance.toString(10))))
+        .then( _ => Splitter.deployed())
+        .then(deployed => web3.eth.getBalance(deployed.address))		
+        .then(balance => $("#balance2").html(toEther(balance.toString(10))))
         .catch(e => {
             $("#status").html(e.toString());
             console.error(e);
