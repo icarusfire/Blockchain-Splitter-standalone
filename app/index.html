@@ -5,16 +5,17 @@
 <meta charset="utf-8">
 
 
-
-
 </head>
 <body>
 <div>Your Balance <span id="balance">Loading...</span> Eth</div>
 <div>Splitter Balance <span id="balance2">Loading...</span> Eth</div>
 
 <div>
-    Split <input name="amount" type="number" placeholder="0" /> Eth
-    to <input name="recipient" type="text" placeholder="0x0011223344556677889900112233445566778899" />
+    Split <input name="amount" id="amount" type="number" placeholder="0" /> Eth
+    <br>
+    to recp1 <input name="recipient1" id="recipient1" type="text" placeholder="0x0011223344556677889900112233445566778899" />
+    to recp2 <input name="recipient2" id="recipient2" type="text" placeholder="0x0011223344556677889900112233445566778899" />
+
     <button id="send">Now</button>.
 </div>
 <div id="status"></div>
