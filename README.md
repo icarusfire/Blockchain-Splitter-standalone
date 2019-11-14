@@ -1,6 +1,8 @@
 B9Lab Project-1: Splitter 
 Splits ether between 3 people
 
+Note to self:
+
 npm init
 npm install truffle@5.0.8 --save-dev
 ./node_modules/.bin/truffle unbox metacoin
