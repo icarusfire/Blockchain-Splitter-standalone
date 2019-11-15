@@ -2,7 +2,7 @@ pragma solidity 0.5.10;
 
 import "./Ownable.sol";
 
-contract Pausable is Ownable{
+contract Pausable is Ownable {
 
     bool private paused;
     bool private killed;
@@ -27,11 +27,11 @@ contract Pausable is Ownable{
         _;
     }
 
-    function pause() public onlyOwner whenNotPaused{
+    function pause() public onlyOwner whenNotPaused {
         paused = true;
     }
 
-    function resume() public onlyOwner whenPaused whenNotKilled{
+    function resume() public onlyOwner whenPaused whenNotKilled {
         paused = false;
     }
 

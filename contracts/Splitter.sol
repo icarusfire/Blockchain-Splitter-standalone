@@ -31,14 +31,13 @@ contract Splitter is Pausable {
 
     function withdraw(uint256 amount) public whenNotPaused {
         require (amount > 0, "Withdraw amount should be higher than 0");
-        uint256 balanceSender = balances[msg.sender];
-        balances[msg.sender] = balanceSender.sub(amount);
+        balances[msg.sender] = balances[msg.sender].sub(amount);
         emit LogWithdrawEvent(msg.sender, amount);
         (bool success, ) = msg.sender.call.value(amount)("");
         require(success, "Transfer failed.");
     }
 
-    function transferFunds() public whenPaused onlyOwner{
+    function transferFunds() public whenPaused onlyOwner {
         uint256 amount = address(this).balance;
         emit FundsTransferedToOwnerEvent(msg.sender, amount);
         (bool success, ) = msg.sender.call.value(amount)("");

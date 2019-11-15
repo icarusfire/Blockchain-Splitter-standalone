@@ -1,6 +1,6 @@
 pragma solidity 0.5.10;
 
-contract Ownable{
+contract Ownable {
 
     address private owner;
 
@@ -18,7 +18,7 @@ contract Ownable{
     function setOwner(address _newOwner) public onlyOwner {
         require(_newOwner != address(0), "New Owner cant be empty");
         owner = _newOwner;
-        emit OwnerChangedEvent(msg.sender, owner);
+        emit OwnerChangedEvent(msg.sender, _newOwner);
     }
 
 }
