@@ -9,7 +9,7 @@ const assert = require('assert-plus');
 
 
 Promise = require("bluebird");
-const Splitter = artifacts.require("Splitter");
+// const Splitter = artifacts.require("Splitter");
 const truffleAssert = require('truffle-assertions');
 const getBalance = web3.eth.getBalance;
 const getTransaction =  Promise.promisify(web3.eth.getTransaction);
